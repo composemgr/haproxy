@@ -1,0 +1,27 @@
+# nginx proxy address - http://172.17.0.1:8104
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "5m"
+    max-file: "1"
+
+services:
+  haproxy:
+    image: haproxy:latest
+    container_name: haproxy-app
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - haproxy
+    ports:
+      - "8104:8404"
+    environment:
+      TZ: ${TZ:-America/New_York}
+    volumes:
+      - ./rootfs/config/haproxy:/config
+      - ./rootfs/data/haproxy:/data
+
+networks:
+  haproxy:
+    external: false
