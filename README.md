@@ -45,8 +45,8 @@ See `docker-compose.yaml` for complete list of configurable options.
 
 ## 📂 Volumes
 
-- `./rootfs/config/haproxy` - Data storage
-- `./rootfs/data/haproxy` - Data storage
+- `./volumes/config/haproxy` - Data storage
+- `./volumes/data/haproxy` - Data storage
 
 ## 🔍 Logging
 
