@@ -19,8 +19,8 @@ services:
     environment:
       TZ: ${TZ:-America/New_York}
     volumes:
-      - ./rootfs/config/haproxy:/config
-      - ./rootfs/data/haproxy:/data
+      - ./volumes/config/haproxy:/config
+      - ./volumes/data/haproxy:/data
 
 networks:
   haproxy:
