@@ -16,17 +16,41 @@ services:
     logging: *default-logging
     networks:
       - haproxy
+      - proxy
+      - cloudflare
     ports:
       - "80:80"
       - "443:443"
       - "172.17.0.1:8104:8404"
     environment:
       TZ: ${TZ:-America/New_York}
+      CONTAINER_NAME: haproxy-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
     volumes:
       - ./volumes/config/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
       - ./volumes/data/haproxy:/var/lib/haproxy
+    labels:
+      - 'traefik.enable=true'
+      - 'cloudflare.enable=true'
+      - 'traefik.docker.network=proxy'
+      - 'cloudflare.service=http://haproxy-app:8404'
+      - 'cloudflare.hostname=haproxy.${CLOUDFLARE_ZONE_NAME:-}'
+      - 'traefik.http.routers.haproxy-app.entrypoints=http'
+      - 'traefik.http.routers.haproxy-app-secure.tls=true'
+      - 'traefik.http.routers.haproxy-app.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.middlewares.haproxy-app-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.haproxy-app.middlewares=haproxy-app-https-redirect'
+      - 'traefik.http.routers.haproxy-app-secure.entrypoints=https'
+      - 'traefik.http.routers.haproxy-app-secure.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.routers.haproxy-app-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.haproxy-app-secure.service=haproxy-app'
+      - 'traefik.http.services.haproxy-app.loadbalancer.server.port=8404'
 
 networks:
   haproxy:
     name: haproxy
     external: false
+  proxy:
+    external: true
+  cloudflare:
+    external: true
