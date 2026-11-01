@@ -1,0 +1,38 @@
+name: haproxy
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
+
+services:
+  app:
+    image: haproxy:latest
+    container_name: haproxy-app
+    domainname: ${BASE_DOMAIN_NAME:-example.com}
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    environment:
+      TZ: ${TZ:-America/New_York}
+      CONTAINER_NAME: haproxy-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
+    volumes:
+      - './volumes/config/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro'
+      - './volumes/data/haproxy:/var/lib/haproxy:z'
+      - './volumes/config/haproxy/:/usr/local/etc/haproxy/lua:ro'
+    labels:
+      - 'cloudflare.enable=true'
+      - 'cloudflare.service=http://haproxy-app:8404'
+      - 'cloudflare.hostname=${BASE_HOST_NAME:-$HOSTNAME}'
+    networks:
+      - haproxy
+      - cloudflare
+
+networks:
+  haproxy:
+    name: haproxy
+    external: false
+  cloudflare:
+    external: true

@@ -1,56 +1,35 @@
-# nginx proxy address - http://172.17.0.1:8104
+# nginx proxy address - http://172.17.0.1:64193
 
 name: haproxy
 x-logging: &default-logging
-  driver: json-file
   options:
-    max-size: "5m"
-    max-file: "1"
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
 
 services:
   app:
     image: haproxy:latest
-    pull_policy: always
     container_name: haproxy-app
+    domainname: ${BASE_DOMAIN_NAME:-example.com}
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
     restart: always
+    pull_policy: always
     logging: *default-logging
-    networks:
-      - haproxy
-      - proxy
-      - cloudflare
-    ports:
-      - "80:80"
-      - "443:443"
-      - "172.17.0.1:8104:8404"
     environment:
       TZ: ${TZ:-America/New_York}
       CONTAINER_NAME: haproxy-app
       HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
+    ports:
+      - '172.17.0.1:64193:8404'
     volumes:
-      - ./volumes/config/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
-      - ./volumes/data/haproxy:/var/lib/haproxy
-    labels:
-      - 'traefik.enable=true'
-      - 'cloudflare.enable=true'
-      - 'traefik.docker.network=proxy'
-      - 'cloudflare.service=http://haproxy-app:8404'
-      - 'cloudflare.hostname=haproxy.${CLOUDFLARE_ZONE_NAME:-}'
-      - 'traefik.http.routers.haproxy-app.entrypoints=http'
-      - 'traefik.http.routers.haproxy-app-secure.tls=true'
-      - 'traefik.http.routers.haproxy-app.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
-      - 'traefik.http.middlewares.haproxy-app-https-redirect.redirectscheme.scheme=https'
-      - 'traefik.http.routers.haproxy-app.middlewares=haproxy-app-https-redirect'
-      - 'traefik.http.routers.haproxy-app-secure.entrypoints=https'
-      - 'traefik.http.routers.haproxy-app-secure.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
-      - 'traefik.http.routers.haproxy-app-secure.tls.certresolver=cloudflare'
-      - 'traefik.http.routers.haproxy-app-secure.service=haproxy-app'
-      - 'traefik.http.services.haproxy-app.loadbalancer.server.port=8404'
+      - './volumes/config/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro'
+      - './volumes/data/haproxy:/var/lib/haproxy:z'
+      - './volumes/config/haproxy/:/usr/local/etc/haproxy/lua:ro'
+    networks:
+      - haproxy
 
 networks:
   haproxy:
     name: haproxy
     external: false
-  proxy:
-    external: true
-  cloudflare:
-    external: true
