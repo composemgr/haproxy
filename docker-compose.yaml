@@ -20,6 +20,12 @@ services:
       TZ: ${TZ:-America/New_York}
       CONTAINER_NAME: haproxy-app
       HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
+    healthcheck:
+      test: ['CMD', 'bash', '-c', 'exec 3<>/dev/tcp/127.0.0.1/8404']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     ports:
       - '172.17.0.1:64193:8404'
     volumes:
